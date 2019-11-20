@@ -1,12 +1,14 @@
 package docid
 
-import "encoding/hex"
-import "fmt"
+import (
+	"crypto/md5"
+	"encoding/hex"
+)
 
 const (
-	domainIDLength = 16
-	siteIDLength   = 16
-	urlIDLength    = 32
+	domainIDLength = 8
+	siteIDLength   = 8
+	urlIDLength    = 16
 	docIDLength    = domainIDLength + siteIDLength + urlIDLength
 )
 
@@ -29,21 +31,20 @@ const (
 	SymbolColon byte = ':'
 )
 
-type byteKey2L = [2]byte
-type byteKey3L = [3]byte
-type byteKey4L = [4]byte
-type byteKey5L = [5]byte
+// Bytes is byte slice
+type Bytes []byte
 
-var secondDomainMap2L map[byteKey2L]bool
-var secondDomainMap3L map[byteKey3L]bool
-var secondDomainMap4L map[byteKey4L]bool
-var secondDomainMap5L map[byteKey5L]bool
+// BytesSlice is slice of Bytes
+type BytesSlice []Bytes
 
-var topDomainMap2L map[byteKey2L]bool
-var topDomainMap3L map[byteKey3L]bool
-var topDomainMap4L map[byteKey4L]bool
-var topDomainMap5L map[byteKey5L]bool
+// LengthBytesSliceMap is map <length, BytesSlice>
+type LengthBytesSliceMap map[int]BytesSlice
 
+var topDomainMap map[int]BytesSlice = LengthBytesSliceMap{}
+var secondDomainMap map[int]BytesSlice = LengthBytesSliceMap{}
+
+// topDomains contain top domain parts
+// order is important
 var topDomains []string = []string{
 	"ac", "co",
 	"cat", "edu", "net", "biz", "mil", "int", "com", "gov", "org", "pro",
@@ -51,6 +52,8 @@ var topDomains []string = []string{
 	"travel", "museum",
 }
 
+// secondDomains contain second domain parts
+// order is important
 var secondDomains []string = []string{
 	"ha", "hb", "ac", "sc", "gd", "sd", "he", "ah", "qh", "sh", "hi",
 	"bj", "fj", "tj", "xj", "zj", "hk", "hl", "jl", "nm", "hn", "ln",
@@ -61,91 +64,108 @@ var secondDomains []string = []string{
 	"travel", "museum",
 }
 
-func init() {
-	for _, s := range topDomains {
-		switch len(s) {
-		case 2:
-			var k byteKey2L
-			copy(k[:], []byte(s))
-			topDomainMap2L[k] = true
-		case 3:
-			var k byteKey3L
-			copy(k[:], []byte(s))
-			topDomainMap3L[k] = true
-		case 4:
-			var k byteKey4L
-			copy(k[:], []byte(s))
-			topDomainMap4L[k] = true
-		case 5:
-			var k byteKey5L
-			copy(k[:], []byte(s))
-			topDomainMap5L[k] = true
+func initDomainMap(domains []string, domainMap LengthBytesSliceMap){
+	for _, s := range domains {
+		l := len(s)
+		if _, ok :=domainMap[l]; !ok {
+			domainMap[l] = BytesSlice{}
 		}
+		domainMap[l] = append(domainMap[l], Bytes(s))
 	}
 }
 
 func init() {
-	for _, s := range secondDomains {
-		switch len(s) {
-		case 2:
-			var k byteKey2L
-			copy(k[:], []byte(s))
-			secondDomainMap2L[k] = true
-		case 3:
-			var k byteKey3L
-			copy(k[:], []byte(s))
-			secondDomainMap3L[k] = true
-		case 4:
-			var k byteKey4L
-			copy(k[:], []byte(s))
-			secondDomainMap4L[k] = true
-		case 5:
-			var k byteKey5L
-			copy(k[:], []byte(s))
-			secondDomainMap5L[k] = true
+	initDomainMap(topDomains, topDomainMap)
+	initDomainMap(secondDomains, secondDomainMap)
+}
+
+func inDomainMap(domainMap LengthBytesSliceMap, s Bytes ) bool {
+	l := len(s)
+	if _, ok := domainMap[l]; !ok{
+		return false
+	}
+
+	bytesSlice := domainMap[l]
+	var begin int = 0
+	var end int = len(bytesSlice) - 1
+	var mid int = -1
+
+	for (begin <= end){
+		mid = (begin + end) / 2
+		b := bytesSlice[mid]
+		if (s[1] > b[1]){
+			begin = mid+1
+		} else if (s[1] < b[1]){
+			end = mid -1
+		} else {
+			if (s[0] > b[0]){
+				begin = mid + 1
+			} else if (s[0] < b[0]){
+				end = mid-1
+			} else {
+				break
+			}
 		}
 	}
-}
 
-func inSecondDomain(part []byte) bool {
+	if (begin > end){
+		return false
+	}
+
+	var i int = 2
+
+	b := bytesSlice[mid]
+	for i<l && s[i] == b[i] {
+		i++
+	}
+
+	if i == l {
+		return true
+	}
+
 	return false
 }
 
-func inTopDomain(part []byte) bool {
-	return false
+func inSecondDomain(s Bytes) bool {
+	return inDomainMap(secondDomainMap, s)
 }
 
-// DomainID is the first 16 bytes of DocID
+func inTopDomain(s []byte) bool {
+	return inDomainMap(topDomainMap, s)
+}
+
+
+// DomainID is the first 8 bytes of DocID
 type DomainID [domainIDLength]byte
 
-// SiteID is the middle 16 bytes of DocID
+// SiteID is the middle 8 bytes of DocID
 type SiteID [siteIDLength]byte
 
-// URLID is the last 32 bytes of DocID
+// URLID is the last 16 bytes of DocID
 type URLID [urlIDLength]byte
 
-// DocID is 64 bytes array
+// DocID is 32 bytes array
 type DocID [docIDLength]byte
 
-func (id *DomainID) String() string {
+func (id DomainID) String() string {
 	var buf [domainIDHexLength]byte
 	hex.Encode(buf[:], id[:])
 	return string(buf[:])
 }
 
-func (id *SiteID) String() string {
+func (id SiteID) String() string {
 	var buf [siteIDHexLength]byte
 	hex.Encode(buf[:], id[:])
 	return string(buf[:])
 }
 
-func (id *URLID) String() string {
+func (id URLID) String() string {
 	var buf [urlIDHexLength]byte
 	hex.Encode(buf[:], id[:])
 	return string(buf[:])
 }
 
-func (id *DocID) String() string {
+func (id DocID) String() string {
 	var buf [docIDHexLength]byte
 	hex.Encode(buf[:], id[0:domainIDLength])
 	buf[domainSiteHexSepPos] = SymbolMinus
@@ -153,6 +173,10 @@ func (id *DocID) String() string {
 	buf[siteURLHexSepPos] = SymbolMinus
 	hex.Encode(buf[urlIDHexStart:], id[urlIDLength:])
 	return string(buf[:])
+}
+
+func digest(data Bytes) [md5.Size]byte {
+	return md5.Sum(data)
 }
 
 // DomainID get the domain ID
@@ -176,7 +200,7 @@ func (id *DocID) URLID() URLID {
 	return d
 }
 
-func splitDomainSite(urlBytes []byte) (domain []byte, site []byte) {
+func splitDomainSite(urlBytes Bytes) (Bytes, Bytes) {
 	urlLength := len(urlBytes)
 	var hostHead, hostTail int
 
@@ -188,13 +212,12 @@ func splitDomainSite(urlBytes []byte) (domain []byte, site []byte) {
 		c := urlBytes[i]
 		if c == SymbolDot {
 			dealDomain = true
-
 		} else if c == SymbolSlash {
 			break
 		} else if c == SymbolColon {
 			if (i+2 < urlLength) && (urlBytes[i+1] == SymbolSlash) && (urlBytes[i+2] == SymbolSlash) {
 				i += 3
-				domainHead, domainPostHead, domainPostHead, domainTail = i, i, i, i
+				domainHead, domainPreHead, domainPostHead, domainTail = i, i, i, i
 				continue
 			} else if !findDomain {
 				dealDomain, findDomain = true, true
@@ -204,12 +227,13 @@ func splitDomainSite(urlBytes []byte) (domain []byte, site []byte) {
 		if dealDomain {
 			domainPreHead, domainHead = domainHead, domainPostHead
 			domainPostHead, domainTail = domainTail, i
+			dealDomain = false
 		}
 		i++
 	}
 
 	hostTail = i
-	if !findDomain {
+	if (!findDomain) {
 		domainPreHead, domainHead = domainHead, domainPostHead
 		domainPostHead, domainTail = domainTail, i
 	}
@@ -224,7 +248,14 @@ func splitDomainSite(urlBytes []byte) (domain []byte, site []byte) {
 }
 
 // FromBytes get DocID from URL bytes
-func FromBytes(urlBytes []byte) DocID {
-	fmt.Println(topDomainMap3L)
-	return DocID{}
+func FromBytes(urlBytes Bytes) DocID {
+	domain, site := splitDomainSite(urlBytes)
+	d := DocID{}
+	domainDigest := digest(domain)
+	copy(d[:], domainDigest[:domainIDLength])
+	siteDigest := digest(site)
+	copy(d[domainIDLength:], siteDigest[:siteIDLength])
+	urlDigest := digest(urlBytes)
+	copy(d[urlIDLength:], urlDigest[:])
+	return d
 }
