@@ -37,11 +37,10 @@ type Bytes []byte
 // BytesSlice is slice of Bytes
 type BytesSlice []Bytes
 
-// LengthBytesSliceMap is map <length, BytesSlice>
-type LengthBytesSliceMap map[int]BytesSlice
+type lengthBytesSliceMap map[int]BytesSlice
 
-var topDomainMap map[int]BytesSlice = LengthBytesSliceMap{}
-var secondDomainMap map[int]BytesSlice = LengthBytesSliceMap{}
+var topDomainMap = lengthBytesSliceMap{}
+var secondDomainMap = lengthBytesSliceMap{}
 
 // topDomains contain top domain parts
 // order is important
@@ -64,10 +63,10 @@ var secondDomains []string = []string{
 	"travel", "museum",
 }
 
-func initDomainMap(domains []string, domainMap LengthBytesSliceMap){
+func initDomainMap(domains []string, domainMap lengthBytesSliceMap) {
 	for _, s := range domains {
 		l := len(s)
-		if _, ok :=domainMap[l]; !ok {
+		if _, ok := domainMap[l]; !ok {
 			domainMap[l] = BytesSlice{}
 		}
 		domainMap[l] = append(domainMap[l], Bytes(s))
@@ -79,9 +78,9 @@ func init() {
 	initDomainMap(secondDomains, secondDomainMap)
 }
 
-func inDomainMap(domainMap LengthBytesSliceMap, s Bytes ) bool {
+func inDomainMap(domainMap lengthBytesSliceMap, s Bytes) bool {
 	l := len(s)
-	if _, ok := domainMap[l]; !ok{
+	if _, ok := domainMap[l]; !ok {
 		return false
 	}
 
@@ -90,32 +89,32 @@ func inDomainMap(domainMap LengthBytesSliceMap, s Bytes ) bool {
 	var end int = len(bytesSlice) - 1
 	var mid int = -1
 
-	for (begin <= end){
+	for begin <= end {
 		mid = (begin + end) / 2
 		b := bytesSlice[mid]
-		if (s[1] > b[1]){
-			begin = mid+1
-		} else if (s[1] < b[1]){
-			end = mid -1
+		if s[1] > b[1] {
+			begin = mid + 1
+		} else if s[1] < b[1] {
+			end = mid - 1
 		} else {
-			if (s[0] > b[0]){
+			if s[0] > b[0] {
 				begin = mid + 1
-			} else if (s[0] < b[0]){
-				end = mid-1
+			} else if s[0] < b[0] {
+				end = mid - 1
 			} else {
 				break
 			}
 		}
 	}
 
-	if (begin > end){
+	if begin > end {
 		return false
 	}
 
 	var i int = 2
 
 	b := bytesSlice[mid]
-	for i<l && s[i] == b[i] {
+	for i < l && s[i] == b[i] {
 		i++
 	}
 
@@ -133,7 +132,6 @@ func inSecondDomain(s Bytes) bool {
 func inTopDomain(s []byte) bool {
 	return inDomainMap(topDomainMap, s)
 }
-
 
 // DomainID is the first 8 bytes of DocID
 type DomainID [domainIDLength]byte
@@ -233,7 +231,7 @@ func splitDomainSite(urlBytes Bytes) (Bytes, Bytes) {
 	}
 
 	hostTail = i
-	if (!findDomain) {
+	if !findDomain {
 		domainPreHead, domainHead = domainHead, domainPostHead
 		domainPostHead, domainTail = domainTail, i
 	}
@@ -248,7 +246,7 @@ func splitDomainSite(urlBytes Bytes) (Bytes, Bytes) {
 }
 
 // FromBytes get DocID from URL bytes
-func FromBytes(urlBytes Bytes) DocID {
+func FromURLBytes(urlBytes Bytes) (DocID, error) {
 	domain, site := splitDomainSite(urlBytes)
 	d := DocID{}
 	domainDigest := digest(domain)
@@ -257,5 +255,9 @@ func FromBytes(urlBytes Bytes) DocID {
 	copy(d[domainIDLength:], siteDigest[:siteIDLength])
 	urlDigest := digest(urlBytes)
 	copy(d[urlIDLength:], urlDigest[:])
-	return d
+	return d, nil
+}
+
+func FromBytes(data Bytes) (DocID, error) {
+	return FromURLBytes(data)
 }
