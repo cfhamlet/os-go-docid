@@ -4,6 +4,8 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+
+	"github.com/pkg/errors"
 )
 
 // InvalidBytesError value describe invalid bytes
@@ -315,6 +317,22 @@ func FromBytes(data Bytes) (docid *DocID, err error) {
 	}
 	if (docid == nil && err == nil) || err != nil {
 		return FromURLBytes(data)
+	}
+	return docid, err
+}
+
+// New create new DocID
+func New(data interface{}) (docid *DocID, err error) {
+	docid, err = nil, nil
+	switch v := data.(type) {
+	case []byte:
+		return FromBytes(Bytes(v))
+	case string:
+		return FromBytes(Bytes(v))
+	case Bytes:
+		return FromBytes(v)
+	default:
+		err = errors.Errorf("docid: not support type %T", v)
 	}
 	return docid, err
 }
