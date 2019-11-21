@@ -2,6 +2,7 @@ package docid
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -43,7 +44,7 @@ func BenchmarkInDomainMap(b *testing.B) {
 }
 
 type parseTest struct {
-	data     string
+	data     interface{}
 	docidStr string
 	isErr    bool
 }
@@ -118,9 +119,23 @@ var testsFromDocIDHexReadableBytes = []parseTest{
 
 type parseFunc func(Bytes) (*DocID, error)
 
-func testParse(t *testing.T, f parseFunc, tests *[]parseTest) {
+func testParse(t *testing.T, f interface{}, tests *[]parseTest, toBytes bool) {
+	fv := reflect.ValueOf(f)
 	for _, test := range *tests {
-		docid, err := f(Bytes(test.data))
+		var d interface{} = test.data
+		if toBytes {
+			switch v := test.data.(type) {
+			case string:
+				d = Bytes(v)
+			case []byte:
+				d = Bytes(v)
+			}
+		}
+
+		results := fv.Call([]reflect.Value{reflect.ValueOf(d)})
+		docid := results[0].Interface().(*DocID)
+		err := results[1].Interface()
+
 		if test.isErr {
 			if err == nil {
 				t.Errorf("parse fail: %v expect err != nil", test)
@@ -133,28 +148,35 @@ func testParse(t *testing.T, f parseFunc, tests *[]parseTest) {
 			}
 		}
 	}
-
 }
 
 func TestFromURLBytes(t *testing.T) {
-	testParse(t, FromURLBytes, &testsFromURLBytes)
+	testParse(t, FromURLBytes, &testsFromURLBytes, true)
 }
 
 func TestFromDocIDHexBytes(t *testing.T) {
-	testParse(t, FromDocIDHexBytes, &testsFromDocIDHexBytes)
+	testParse(t, FromDocIDHexBytes, &testsFromDocIDHexBytes, true)
 }
 
 func TestFromDocIDHexReadableBytes(t *testing.T) {
-	testParse(t, FromDocIDHexReadableBytes, &testsFromDocIDHexReadableBytes)
+	testParse(t, FromDocIDHexReadableBytes, &testsFromDocIDHexReadableBytes, true)
 }
 func TestFromBytes(t *testing.T) {
 	for _, tests := range [](*[]parseTest){&testsFromURLBytes,
 		&testsFromDocIDHexBytes,
 		&testsFromDocIDHexReadableBytes} {
 
-		testParse(t, FromBytes, tests)
+		testParse(t, FromBytes, tests, true)
 	}
+}
 
+func TestNew(t *testing.T) {
+	for _, tests := range [](*[]parseTest){&testsFromURLBytes,
+		&testsFromDocIDHexBytes,
+		&testsFromDocIDHexReadableBytes} {
+
+		testParse(t, New, tests, false)
+	}
 }
 
 func BenchmarkFromBytes(b *testing.B) {
@@ -181,5 +203,25 @@ func BenchmarkFromDocIDHexReadableBytes(b *testing.B) {
 	t := Bytes("1d5920f4b44b27a8-ed646a3334ca891f-ed646a3334ca891fd3467db131372140")
 	for i := 0; i < b.N; i++ {
 		FromURLBytes(t)
+	}
+}
+
+func BenchmarkNewString(b *testing.B) {
+	t := "1d5920f4b44b27a8-ed646a3334ca891f-ed646a3334ca891fd3467db131372140"
+	for i := 0; i < b.N; i++ {
+		New(t)
+	}
+}
+
+func BenchmarkNewBytes(b *testing.B) {
+	t := Bytes("1d5920f4b44b27a8-ed646a3334ca891f-ed646a3334ca891fd3467db131372140")
+	for i := 0; i < b.N; i++ {
+		New(t)
+	}
+}
+func BenchmarkNewByteArray(b *testing.B) {
+	t := []byte("1d5920f4b44b27a8-ed646a3334ca891f-ed646a3334ca891fd3467db131372140")
+	for i := 0; i < b.N; i++ {
+		New(t)
 	}
 }
