@@ -3,24 +3,37 @@ package docid
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
+)
+
+// InvalidBytesError value describe invalid bytes
+type InvalidBytesError Bytes
+
+func (e InvalidBytesError) Error() string {
+	return fmt.Sprintf("docid: invalid Bytes %q", e)
+}
+
+const (
+	domainIDLength     = 8
+	siteIDLength       = 8
+	urlIDLength        = 16
+	domainSiteIDLength = domainIDLength + siteIDLength
+	docIDLength        = domainSiteIDLength + urlIDLength
 )
 
 const (
-	domainIDLength = 8
-	siteIDLength   = 8
-	urlIDLength    = 16
-	docIDLength    = domainIDLength + siteIDLength + urlIDLength
+	domainIDHexLength = domainIDLength * 2
+	siteIDHexLength   = siteIDLength * 2
+	urlIDHexLength    = urlIDLength * 2
+	docIDHexLength    = docIDLength * 2
 )
 
 const (
-	domainIDHexLength   = domainIDLength * 2
-	domainSiteHexSepPos = domainIDHexLength
-	siteIDHexLength     = siteIDLength * 2
-	siteIDHexStart      = domainSiteHexSepPos + 1
-	siteURLHexSepPos    = siteIDHexStart + siteIDHexLength
-	urlIDHexLength      = urlIDLength * 2
-	urlIDHexStart       = siteURLHexSepPos + 1
-	docIDHexLength      = docIDLength*2 + 2
+	domainSiteHexReadableSepPos = domainIDHexLength
+	siteIDHexReadableStart      = domainSiteHexReadableSepPos + 1
+	siteURLHexReadableSepPos    = siteIDHexReadableStart + siteIDHexLength
+	urlIDHexReadableStart       = siteURLHexReadableSepPos + 1
+	docIDHexReadableLength      = docIDLength*2 + 2
 )
 
 // byte symbols
@@ -145,31 +158,31 @@ type URLID [urlIDLength]byte
 // DocID is 32 bytes array
 type DocID [docIDLength]byte
 
-func (id DomainID) String() string {
+func (id *DomainID) String() string {
 	var buf [domainIDHexLength]byte
 	hex.Encode(buf[:], id[:])
 	return string(buf[:])
 }
 
-func (id SiteID) String() string {
+func (id *SiteID) String() string {
 	var buf [siteIDHexLength]byte
 	hex.Encode(buf[:], id[:])
 	return string(buf[:])
 }
 
-func (id URLID) String() string {
+func (id *URLID) String() string {
 	var buf [urlIDHexLength]byte
 	hex.Encode(buf[:], id[:])
 	return string(buf[:])
 }
 
-func (id DocID) String() string {
-	var buf [docIDHexLength]byte
-	hex.Encode(buf[:], id[0:domainIDLength])
-	buf[domainSiteHexSepPos] = SymbolMinus
-	hex.Encode(buf[siteIDHexStart:], id[domainIDLength:urlIDLength])
-	buf[siteURLHexSepPos] = SymbolMinus
-	hex.Encode(buf[urlIDHexStart:], id[urlIDLength:])
+func (docid *DocID) String() string {
+	var buf [docIDHexReadableLength]byte
+	hex.Encode(buf[:], docid[0:domainIDLength])
+	buf[domainSiteHexReadableSepPos] = SymbolMinus
+	hex.Encode(buf[siteIDHexReadableStart:], docid[domainIDLength:urlIDLength])
+	buf[siteURLHexReadableSepPos] = SymbolMinus
+	hex.Encode(buf[urlIDHexReadableStart:], docid[urlIDLength:])
 	return string(buf[:])
 }
 
@@ -178,29 +191,29 @@ func digest(data Bytes) [md5.Size]byte {
 }
 
 // DomainID get the domain ID
-func (id *DocID) DomainID() DomainID {
+func (docid *DocID) DomainID() DomainID {
 	var d DomainID
-	copy(d[:], id[0:domainIDLength])
+	copy(d[:], docid[0:domainIDLength])
 	return d
 }
 
 // SiteID get the Site ID
-func (id *DocID) SiteID() SiteID {
+func (docid *DocID) SiteID() SiteID {
 	var d SiteID
-	copy(d[:], id[domainIDLength:urlIDLength])
+	copy(d[:], docid[domainIDLength:urlIDLength])
 	return d
 }
 
 // URLID get the URL ID
-func (id *DocID) URLID() URLID {
+func (docid *DocID) URLID() URLID {
 	var d URLID
-	copy(d[:], id[urlIDLength:])
+	copy(d[:], docid[urlIDLength:])
 	return d
 }
 
 func splitDomainSite(urlBytes Bytes) (Bytes, Bytes) {
 	urlLength := len(urlBytes)
-	var hostHead, hostTail int
+	var siteHead, siteTail int
 
 	domainHead, domainTail, domainPreHead, domainPostHead := -1, -1, -1, -1
 	findDomain, dealDomain := false, false
@@ -230,7 +243,7 @@ func splitDomainSite(urlBytes Bytes) (Bytes, Bytes) {
 		i++
 	}
 
-	hostTail = i
+	siteTail = i
 	if !findDomain {
 		domainPreHead, domainHead = domainHead, domainPostHead
 		domainPostHead, domainTail = domainTail, i
@@ -242,22 +255,66 @@ func splitDomainSite(urlBytes Bytes) (Bytes, Bytes) {
 
 	domainHead++
 
-	return urlBytes[domainHead:domainTail], urlBytes[hostHead:hostTail]
+	return urlBytes[domainHead:domainTail], urlBytes[siteHead:siteTail]
 }
 
-// FromBytes get DocID from URL bytes
-func FromURLBytes(urlBytes Bytes) (DocID, error) {
+// FromURLBytes parse DocID from URL bytes
+func FromURLBytes(urlBytes Bytes) (docid *DocID, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			docid, err = nil, fmt.Errorf("docid: %w", e.(error))
+		}
+	}()
+	docid = new(DocID)
 	domain, site := splitDomainSite(urlBytes)
-	d := DocID{}
 	domainDigest := digest(domain)
-	copy(d[:], domainDigest[:domainIDLength])
+	copy(docid[:], domainDigest[:domainIDLength])
 	siteDigest := digest(site)
-	copy(d[domainIDLength:], siteDigest[:siteIDLength])
+	copy(docid[domainIDLength:], siteDigest[:siteIDLength])
 	urlDigest := digest(urlBytes)
-	copy(d[urlIDLength:], urlDigest[:])
-	return d, nil
+	copy(docid[urlIDLength:], urlDigest[:])
+	return docid, nil
 }
 
-func FromBytes(data Bytes) (DocID, error) {
-	return FromURLBytes(data)
+// FromDocIDHexBytes parse DocID from hex bytes
+func FromDocIDHexBytes(data Bytes) (docid *DocID, err error) {
+	if len(data) != docIDHexLength {
+		return nil, InvalidBytesError(data)
+	}
+
+	docid = new(DocID)
+	_, err = hex.Decode(docid[:], data)
+	return docid, err
+}
+
+// FromDocIDHexReadableBytes parse DocID from readable hex bytes
+func FromDocIDHexReadableBytes(data Bytes) (docid *DocID, err error) {
+	if len(data) != docIDHexReadableLength || data[domainSiteHexReadableSepPos] != SymbolMinus || data[siteURLHexReadableSepPos] != SymbolMinus {
+		return nil, InvalidBytesError(data)
+	}
+	docid = new(DocID)
+
+	_, err = hex.Decode(docid[:], data[0:domainIDHexLength])
+	if err == nil {
+		_, err = hex.Decode(docid[domainIDLength:], data[siteIDHexReadableStart:siteURLHexReadableSepPos])
+		if err == nil {
+			_, err = hex.Decode(docid[domainSiteIDLength:], data[urlIDHexReadableStart:])
+		}
+	}
+	return docid, err
+}
+
+// FromBytes parse DocID from bytes
+func FromBytes(data Bytes) (docid *DocID, err error) {
+	docid, err = nil, nil
+	switch len(data) {
+	case docIDHexLength:
+		docid, err = FromDocIDHexBytes(data)
+	case docIDHexReadableLength:
+		docid, err = FromDocIDHexReadableBytes(data)
+	}
+	if (docid == nil && err == nil) || err != nil {
+		return FromURLBytes(data)
+	}
+	return docid, err
 }
