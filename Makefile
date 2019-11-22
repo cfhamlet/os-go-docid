@@ -43,7 +43,7 @@ test-unit:
 test-coverage:
 	@echo
 	@echo  "==> Running unit tests with coverage <=="
-	@ ./script/coverage.sh
+	@ ./scripts/coverage.sh
         
 
 .PHONY: build
