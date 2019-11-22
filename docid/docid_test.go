@@ -117,10 +117,8 @@ var testsFromDocIDHexReadableBytes = []parseTest{
 	},
 }
 
-type parseFunc func(Bytes) (*DocID, error)
-
-func testParse(t *testing.T, f interface{}, tests *[]parseTest, toBytes bool) {
-	fv := reflect.ValueOf(f)
+func testParse(t *testing.T, parseFunc interface{}, tests *[]parseTest, toBytes bool) {
+	pfunc := reflect.ValueOf(parseFunc)
 	for _, test := range *tests {
 		var d interface{} = test.data
 		if toBytes {
@@ -132,7 +130,7 @@ func testParse(t *testing.T, f interface{}, tests *[]parseTest, toBytes bool) {
 			}
 		}
 
-		results := fv.Call([]reflect.Value{reflect.ValueOf(d)})
+		results := pfunc.Call([]reflect.Value{reflect.ValueOf(d)})
 		docid := results[0].Interface().(*DocID)
 		err := results[1].Interface()
 
@@ -219,9 +217,22 @@ func BenchmarkNewBytes(b *testing.B) {
 		New(t)
 	}
 }
-func BenchmarkNewByteArray(b *testing.B) {
+func BenchmarkNewByteSlice(b *testing.B) {
 	t := []byte("1d5920f4b44b27a8-ed646a3334ca891f-ed646a3334ca891fd3467db131372140")
 	for i := 0; i < b.N; i++ {
 		New(t)
 	}
+}
+
+func ExampleNew() {
+	docid, _ := New("http://www.google.com/")
+	fmt.Println(docid)
+	docid, _ = New("1d5920f4b44b27a8-ed646a3334ca891f-ff90821feeb2b02a33a6f9fc8e5f3fcd")
+	fmt.Println(docid)
+	docid, _ = New("1d5920f4b44b27a8-ed646a3334ca891f-ff90821feeb2b02a33a6f9fc8e5f3fcd")
+	fmt.Println(docid)
+	// Output:
+	// 1d5920f4b44b27a8-ed646a3334ca891f-ff90821feeb2b02a33a6f9fc8e5f3fcd
+	// 1d5920f4b44b27a8-ed646a3334ca891f-ff90821feeb2b02a33a6f9fc8e5f3fcd
+	// 1d5920f4b44b27a8-ed646a3334ca891f-ff90821feeb2b02a33a6f9fc8e5f3fcd
 }
