@@ -32,7 +32,7 @@ var (
 func init() {
 	flag.Var(&flist, "f", "comma separated file list (default: stdin)")
 	flag.BoolVar(&v, "v", false, "show version and exit")
-	flag.BoolVar(&vv, "V", false, "show verbos version info and exit")
+	flag.BoolVar(&vv, "V", false, "show verbos info and exit")
 	flag.Usage = usage
 }
 
@@ -66,7 +66,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "go-docid %s\n", version.Version())
 		os.Exit(0)
 	} else if vv {
-		fmt.Fprintln(os.Stderr, version.VerbosVersion())
+		fmt.Fprintln(os.Stderr, version.VerbosInfo())
 		os.Exit(0)
 	}
 	if len(flist) <= 0 {

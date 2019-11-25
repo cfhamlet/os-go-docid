@@ -11,8 +11,8 @@ var (
 	gitStatus string
 )
 
-// VerbosVersion as name
-func VerbosVersion() string {
+// VerbosInfo as name
+func VerbosInfo() string {
 	var o bytes.Buffer
 	o.WriteString("Version:   " + version + "\n")
 	o.WriteString("GoVersion: " + goVersion + "\n")
