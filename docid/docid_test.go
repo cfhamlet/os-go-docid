@@ -141,7 +141,7 @@ func testParse(t *testing.T, parseFunc interface{}, tests *[]parseTest, toBytes 
 		} else {
 			if err != nil {
 				t.Errorf("parse fail: %v expect err == nil, err=%v", test, err)
-			} else if fmt.Sprintf("%s", docid) != test.docidStr {
+			} else if docid.String() != test.docidStr {
 				t.Errorf("parse fail: %v expect %s, result is %s", test, test.docidStr, docid.String())
 			}
 		}
@@ -180,47 +180,47 @@ func TestNew(t *testing.T) {
 func BenchmarkFromBytes(b *testing.B) {
 	t := Bytes("http://www.google.com.hk/abc")
 	for i := 0; i < b.N; i++ {
-		FromBytes(t)
+		_, _ = FromBytes(t)
 	}
 }
 
 func BenchmarkFromURLBytes(b *testing.B) {
 	t := Bytes("http://www.google.com.hk/abc")
 	for i := 0; i < b.N; i++ {
-		FromURLBytes(t)
+		_, _ = FromURLBytes(t)
 	}
 }
 func BenchmarkFromDocIDHexBytes(b *testing.B) {
 	t := Bytes("1d5920f4b44b27a8ed646a3334ca891fed646a3334ca891fd3467db131372140")
 	for i := 0; i < b.N; i++ {
-		FromURLBytes(t)
+		_, _ = FromURLBytes(t)
 	}
 }
 
 func BenchmarkFromDocIDHexReadableBytes(b *testing.B) {
 	t := Bytes("1d5920f4b44b27a8-ed646a3334ca891f-ed646a3334ca891fd3467db131372140")
 	for i := 0; i < b.N; i++ {
-		FromURLBytes(t)
+		_, _ = FromURLBytes(t)
 	}
 }
 
 func BenchmarkNewString(b *testing.B) {
 	t := "1d5920f4b44b27a8-ed646a3334ca891f-ed646a3334ca891fd3467db131372140"
 	for i := 0; i < b.N; i++ {
-		New(t)
+		_, _ = New(t)
 	}
 }
 
 func BenchmarkNewBytes(b *testing.B) {
 	t := Bytes("1d5920f4b44b27a8-ed646a3334ca891f-ed646a3334ca891fd3467db131372140")
 	for i := 0; i < b.N; i++ {
-		New(t)
+		_, _ = New(t)
 	}
 }
 func BenchmarkNewByteSlice(b *testing.B) {
 	t := []byte("1d5920f4b44b27a8-ed646a3334ca891f-ed646a3334ca891fd3467db131372140")
 	for i := 0; i < b.N; i++ {
-		New(t)
+		_, _ = New(t)
 	}
 }
 

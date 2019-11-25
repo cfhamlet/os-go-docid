@@ -23,7 +23,6 @@ func (f *fileList) String() string {
 }
 
 var (
-	h     bool
 	v     bool
 	vv    bool
 	flist fileList

@@ -133,11 +133,7 @@ func inDomainMap(domainMap lengthBytesSliceMap, s Bytes) bool {
 		i++
 	}
 
-	if i == l {
-		return true
-	}
-
-	return false
+	return i == l
 }
 
 func inSecondDomain(s Bytes) bool {
