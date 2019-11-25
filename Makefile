@@ -46,7 +46,7 @@ test: test-coverage
 test: test-bench
 
 .PHONY: test-lint
-test-lint:
+test-lint:$(GOLINT)
 	@echo
 	@echo  "==> Running lint test <=="
 	GO111MODULE=on $(GOLINT) run
@@ -80,7 +80,7 @@ $(BINDIR)/$(BINNAME): $(SRC)
 
 
 .PHONY: format
-format:
+format: $(GOIMPORTS)
 	GO111MODULE=on go list -f '{{.Dir}}' ./... | xargs $(GOIMPORTS) -w 
 
 
