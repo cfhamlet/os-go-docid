@@ -78,7 +78,7 @@ $(GOIMPORTS):
 
 .PHONY: install
 install:
-	GO111MODULE=on go build -i $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(INSTALLPATH)/$(BINNAME)
+	GO111MODULE=on go build -i $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(INSTALLPATH)/$(BINNAME) ./cmd/go-docid
 
 .PHONY: clean
 clean:
