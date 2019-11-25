@@ -6,6 +6,7 @@ BUILDTIME   := $(shell date +'%Y-%m-%d %H:%M:%S')
 GOPATH      := $(shell go env GOPATH)
 GOVERSION   := $(shell go version)
 GOIMPORTS   := $(GOPATH)/bin/goimports
+GOLINT      := $(GOPATH)/bin/golangci-lint
 INSTALLPATH := $(GOPATH)/bin
 
 PKG         := ./...
@@ -45,10 +46,13 @@ test: test-coverage
 test: test-bench
 
 .PHONY: test-lint
-test-lint:
+test-lint:$(GOLINT)
 	@echo
 	@echo  "==> Running lint test <=="
-	GO111MODULE=on golangci-lint run
+	GO111MODULE=on $(GOLINT) run
+
+$(GOLINT):
+	(cd /; curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(GOPATH)/bin v1.21.0)
 
 .PHONY: test-unit
 test-unit:
@@ -76,7 +80,7 @@ $(BINDIR)/$(BINNAME): $(SRC)
 
 
 .PHONY: format
-format:
+format: $(GOIMPORTS)
 	GO111MODULE=on go list -f '{{.Dir}}' ./... | xargs $(GOIMPORTS) -w 
 
 
