@@ -2,6 +2,8 @@
 
 [![Build Status](https://www.travis-ci.org/cfhamlet/os-docid.svg?branch=master)](https://www.travis-ci.org/cfhamlet/os-docid)
 [![codecov](https://codecov.io/gh/cfhamlet/os-go-docid/branch/master/graph/badge.svg)](https://codecov.io/gh/cfhamlet/os-go-docid)
+[![Documentation](https://godoc.org/github.com/cfhamlet/os-go-docid/docid?status.svg)](https://godoc.org/github.com/cfhamlet/os-go-docid/docid)
+
 
 DocID for Golang. 
 
@@ -22,6 +24,10 @@ git clone -b v0.0.1 https://github.com/cfhamlet/os-go-docid.git
 cd os-go-docid
 make install
 ```
+
+## Document
+
+Read the [GoDoc](https://godoc.org/github.com/cfhamlet/os-go-docid/docid ).
 
 ## Usage
 
