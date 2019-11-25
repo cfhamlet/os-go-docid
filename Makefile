@@ -39,9 +39,16 @@ all: build
 .PHONY: test
 test: build
 test: TESTFLAGS += -race -v
+test: test-lint
 test: test-unit
 test: test-coverage
 test: test-bench
+
+.PHONY: test-lint
+test-lint:
+	@echo
+	@echo  "==> Running lint test <=="
+	GO111MODULE=on golangci-lint run
 
 .PHONY: test-unit
 test-unit:
