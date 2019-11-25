@@ -11,8 +11,8 @@ env:
   global:
     GO111MODULE=on
 
-install: true
-
 script:
   - make test
+
+after_success:
   - scripts/coverage.sh --codecov
