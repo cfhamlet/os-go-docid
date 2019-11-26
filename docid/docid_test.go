@@ -117,6 +117,34 @@ var testsFromDocIDHexReadableBytes = []parseTest{
 	},
 }
 
+var testsNew = []parseTest{
+	{
+		Bytes("http://www.google.com/"),
+		"1d5920f4b44b27a8-ed646a3334ca891f-ff90821feeb2b02a33a6f9fc8e5f3fcd",
+		false,
+	},
+	{
+		[]byte("http://www.google.com"),
+		"1d5920f4b44b27a8-ed646a3334ca891f-ed646a3334ca891fd3467db131372140",
+		false,
+	},
+	{
+		"http://www.google.com.hk/abc",
+		"da90da7194dbc779-a735b82241adc4d2-d896d112b3ee45903c11a2cf67d4059f",
+		false,
+	},
+	{
+		"1",
+		"",
+		true,
+	},
+	{
+		1,
+		"",
+		true,
+	},
+}
+
 func testParse(t *testing.T, parseFunc interface{}, tests *[]parseTest, toBytes bool) {
 	pfunc := reflect.ValueOf(parseFunc)
 	for _, test := range *tests {
@@ -160,19 +188,22 @@ func TestFromDocIDHexReadableBytes(t *testing.T) {
 	testParse(t, FromDocIDHexReadableBytes, &testsFromDocIDHexReadableBytes, true)
 }
 func TestFromBytes(t *testing.T) {
-	for _, tests := range [](*[]parseTest){&testsFromURLBytes,
+	for _, tests := range [](*[]parseTest){
+		&testsFromURLBytes,
 		&testsFromDocIDHexBytes,
-		&testsFromDocIDHexReadableBytes} {
-
+		&testsFromDocIDHexReadableBytes,
+	} {
 		testParse(t, FromBytes, tests, true)
 	}
 }
 
 func TestNew(t *testing.T) {
-	for _, tests := range [](*[]parseTest){&testsFromURLBytes,
+	for _, tests := range [](*[]parseTest){
+		&testsFromURLBytes,
 		&testsFromDocIDHexBytes,
-		&testsFromDocIDHexReadableBytes} {
-
+		&testsFromDocIDHexReadableBytes,
+		&testsNew,
+	} {
 		testParse(t, New, tests, false)
 	}
 }
@@ -235,4 +266,33 @@ func ExampleNew() {
 	// 1d5920f4b44b27a8-ed646a3334ca891f-ff90821feeb2b02a33a6f9fc8e5f3fcd
 	// 1d5920f4b44b27a8-ed646a3334ca891f-ff90821feeb2b02a33a6f9fc8e5f3fcd
 	// 1d5920f4b44b27a8-ed646a3334ca891f-ff90821feeb2b02a33a6f9fc8e5f3fcd
+}
+
+func TestSiteID(t *testing.T) {
+	url := "http://www.google.com/"
+	expect := "ed646a3334ca891f"
+	d, _ := New(url)
+	r := d.SiteID()
+	if r.String() != expect {
+		t.Errorf("expect: %s result: %s", expect, r.String())
+	}
+}
+func TestDomainID(t *testing.T) {
+	url := "http://www.google.com/"
+	expect := "1d5920f4b44b27a8"
+	d, _ := New(url)
+	r := d.DomainID()
+	if r.String() != expect {
+		t.Errorf("expect: %s result: %s", expect, r.String())
+	}
+}
+func TestURLID(t *testing.T) {
+	url := "http://www.google.com/"
+	expect := "ff90821feeb2b02a33a6f9fc8e5f3fcd"
+	d, _ := New(url)
+	r := d.URLID()
+	if r.String() != expect {
+		t.Errorf("expect: %s result: %s", expect, r.String())
+	}
+
 }
