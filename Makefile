@@ -76,6 +76,8 @@ test-bench:
 build: $(BINDIR)/$(BINNAME)
 
 $(BINDIR)/$(BINNAME): $(SRC)
+	@echo
+	@echo  "==> Building ./cmd/go-docid $(BINDIR)/$(BINNAME) <=="
 	GO111MODULE=on go build $(GOFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(BINNAME) ./cmd/go-docid
 
 
