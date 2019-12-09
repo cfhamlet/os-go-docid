@@ -4,25 +4,24 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestInDomainMap(t *testing.T) {
+	assert := assert.New(t)
 
 	for _, k := range topDomains {
-		if !inDomainMap(topDomainMap, Bytes(k)) {
-			t.Errorf("Bytes(%q) not in topDomainMap", k)
-		}
+		assert.Equal(inDomainMap(topDomainMap, Bytes(k)), true)
 	}
 	for _, k := range secondDomains {
-		if !inDomainMap(secondDomainMap, Bytes(k)) {
-			t.Errorf("Bytes(%q) not in secondDomainMap", k)
-		}
+		assert.Equal(inDomainMap(secondDomainMap, Bytes(k)), true)
 	}
 
 	var tests = []struct {
-		lmap  lengthBytesSliceMap
-		input string
-		want  bool
+		lmap     lengthBytesSliceMap
+		input    string
+		expected bool
 	}{
 		{topDomainMap, "com", true},
 		{topDomainMap, "1234567", false},
@@ -30,9 +29,7 @@ func TestInDomainMap(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if inDomainMap(test.lmap, Bytes(test.input)) != test.want {
-			t.Errorf("inDomainMap(%q, Bytes(%q)) != %v", test.lmap, test.input, test.want)
-		}
+		assert.Equal(inDomainMap(test.lmap, Bytes(test.input)), test.expected)
 	}
 }
 
@@ -279,20 +276,15 @@ func TestSiteID(t *testing.T) {
 }
 func TestDomainID(t *testing.T) {
 	url := "http://www.google.com/"
-	expect := "1d5920f4b44b27a8"
+	expected := "1d5920f4b44b27a8"
 	d, _ := New(url)
 	r := d.DomainID()
-	if r.String() != expect {
-		t.Errorf("expect: %s result: %s", expect, r.String())
-	}
+	assert.Equal(t, r.String(), expected)
 }
 func TestURLID(t *testing.T) {
 	url := "http://www.google.com/"
-	expect := "ff90821feeb2b02a33a6f9fc8e5f3fcd"
+	expected := "ff90821feeb2b02a33a6f9fc8e5f3fcd"
 	d, _ := New(url)
 	r := d.URLID()
-	if r.String() != expect {
-		t.Errorf("expect: %s result: %s", expect, r.String())
-	}
-
+	assert.Equal(t, r.String(), expected)
 }
