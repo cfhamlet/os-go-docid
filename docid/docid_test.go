@@ -205,30 +205,25 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func BenchmarkFromBytes(b *testing.B) {
-	t := Bytes("http://www.google.com.hk/abc")
-	for i := 0; i < b.N; i++ {
-		_, _ = FromBytes(t)
+func BenchmarkDocIDCreate(b *testing.B) {
+	tests := []struct {
+		name  string
+		input string
+		f     func(Bytes) (*DocID, error)
+	}{
+		{"URLBytes", "http://www.google.com.hk/abc", FromURLBytes},
+		{"URL", "http://www.google.com.hk/abc", FromBytes},
+		{"DocIDHexBytes", "1d5920f4b44b27a8ed646a3334ca891fed646a3334ca891fd3467db131372140", FromBytes},
+		{"DocIDHexReadableBytes", "1d5920f4b44b27a8-ed646a3334ca891f-ed646a3334ca891fd3467db131372140", FromBytes},
 	}
-}
 
-func BenchmarkFromURLBytes(b *testing.B) {
-	t := Bytes("http://www.google.com.hk/abc")
-	for i := 0; i < b.N; i++ {
-		_, _ = FromURLBytes(t)
-	}
-}
-func BenchmarkFromDocIDHexBytes(b *testing.B) {
-	t := Bytes("1d5920f4b44b27a8ed646a3334ca891fed646a3334ca891fd3467db131372140")
-	for i := 0; i < b.N; i++ {
-		_, _ = FromURLBytes(t)
-	}
-}
-
-func BenchmarkFromDocIDHexReadableBytes(b *testing.B) {
-	t := Bytes("1d5920f4b44b27a8-ed646a3334ca891f-ed646a3334ca891fd3467db131372140")
-	for i := 0; i < b.N; i++ {
-		_, _ = FromURLBytes(t)
+	for _, test := range tests {
+		b.Run(test.name, func(b *testing.B) {
+			t := Bytes(test.input)
+			for i := 0; i < b.N; i++ {
+				_, _ = test.f(t)
+			}
+		})
 	}
 }
 
@@ -265,26 +260,21 @@ func ExampleNew() {
 	// 1d5920f4b44b27a8-ed646a3334ca891f-ff90821feeb2b02a33a6f9fc8e5f3fcd
 }
 
-func TestSiteID(t *testing.T) {
-	url := "http://www.google.com/"
-	expect := "ed646a3334ca891f"
-	d, _ := New(url)
-	r := d.SiteID()
-	if r.String() != expect {
-		t.Errorf("expect: %s result: %s", expect, r.String())
+func TestXID(t *testing.T) {
+	tests := []struct {
+		funcName string
+		input    string
+		expected string
+	}{
+		{"SiteID", "http://www.google.com/", "ed646a3334ca891f"},
+		{"DomainID", "http://www.google.com/", "1d5920f4b44b27a8"},
+		{"URLID", "http://www.google.com/", "ff90821feeb2b02a33a6f9fc8e5f3fcd"},
 	}
-}
-func TestDomainID(t *testing.T) {
-	url := "http://www.google.com/"
-	expected := "1d5920f4b44b27a8"
-	d, _ := New(url)
-	r := d.DomainID()
-	assert.Equal(t, r.String(), expected)
-}
-func TestURLID(t *testing.T) {
-	url := "http://www.google.com/"
-	expected := "ff90821feeb2b02a33a6f9fc8e5f3fcd"
-	d, _ := New(url)
-	r := d.URLID()
-	assert.Equal(t, r.String(), expected)
+
+	for _, test := range tests {
+		d, _ := New(test.input)
+		result := reflect.ValueOf(d).MethodByName(test.funcName).Call([]reflect.Value{})
+		v := result[0].Interface().(fmt.Stringer).String()
+		assert.Equal(t, test.expected, v)
+	}
 }
