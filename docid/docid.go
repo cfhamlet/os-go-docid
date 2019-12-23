@@ -189,24 +189,24 @@ func digest(data Bytes) [md5.Size]byte {
 }
 
 // DomainID get the domain ID
-func (docid *DocID) DomainID() DomainID {
+func (docid *DocID) DomainID() *DomainID {
 	var d DomainID
 	copy(d[:], docid[0:domainIDLength])
-	return d
+	return &d
 }
 
 // SiteID get the Site ID
-func (docid *DocID) SiteID() SiteID {
+func (docid *DocID) SiteID() *SiteID {
 	var d SiteID
 	copy(d[:], docid[domainIDLength:urlIDLength])
-	return d
+	return &d
 }
 
 // URLID get the URL ID
-func (docid *DocID) URLID() URLID {
+func (docid *DocID) URLID() *URLID {
 	var d URLID
 	copy(d[:], docid[urlIDLength:])
-	return d
+	return &d
 }
 
 func splitDomainSite(urlBytes Bytes) (Bytes, Bytes) {

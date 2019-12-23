@@ -20,7 +20,7 @@ go get -u github.com/cfhamlet/os-go-docid
 The binary command line tool can be build from source, you should always build the latest released version , [Releases List]( https://github.com/cfhamlet/os-go-docid/releases )
 
 ```
-git clone -b v0.0.1 https://github.com/cfhamlet/os-go-docid.git
+git clone -b v0.0.2 https://github.com/cfhamlet/os-go-docid.git
 cd os-go-docid
 make install
 ```
