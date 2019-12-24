@@ -160,15 +160,10 @@ func testParse(t *testing.T, parseFunc interface{}, tests *[]parseTest, toBytes 
 		err := results[1].Interface()
 
 		if test.isErr {
-			if err == nil {
-				t.Errorf("parse fail: %v expect err != nil", test)
-			}
+			assert.NotNil(t, err)
 		} else {
-			if err != nil {
-				t.Errorf("parse fail: %v expect err == nil, err=%v", test, err)
-			} else if docid.String() != test.docidStr {
-				t.Errorf("parse fail: %v expect %s, result is %s", test, test.docidStr, docid.String())
-			}
+			assert.Nil(t, err)
+			assert.Equal(t, docid.String(), test.docidStr)
 		}
 	}
 }
@@ -227,23 +222,25 @@ func BenchmarkDocIDCreate(b *testing.B) {
 	}
 }
 
-func BenchmarkNewString(b *testing.B) {
-	t := "1d5920f4b44b27a8-ed646a3334ca891f-ed646a3334ca891fd3467db131372140"
-	for i := 0; i < b.N; i++ {
-		_, _ = New(t)
+func BenchmarkNew(b *testing.B) {
+	raw := "1d5920f4b44b27a8-ed646a3334ca891f-ed646a3334ca891fd3467db131372140"
+	tests := []struct {
+		name  string
+		input interface{}
+	}{
+		{"string", raw},
+		{"Bytes", Bytes(raw)},
+		{"[]byte", []byte(raw)},
 	}
-}
-
-func BenchmarkNewBytes(b *testing.B) {
-	t := Bytes("1d5920f4b44b27a8-ed646a3334ca891f-ed646a3334ca891fd3467db131372140")
-	for i := 0; i < b.N; i++ {
-		_, _ = New(t)
-	}
-}
-func BenchmarkNewByteSlice(b *testing.B) {
-	t := []byte("1d5920f4b44b27a8-ed646a3334ca891f-ed646a3334ca891fd3467db131372140")
-	for i := 0; i < b.N; i++ {
-		_, _ = New(t)
+	for _, test := range tests {
+		b.Run(test.name, func(b *testing.B) {
+			switch input := test.input.(type) {
+			case string, Bytes, []byte:
+				for i := 0; i < b.N; i++ {
+					_, _ = New(input)
+				}
+			}
+		})
 	}
 }
 
