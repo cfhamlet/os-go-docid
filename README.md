@@ -2,7 +2,7 @@
 
 [![Build Status](https://www.travis-ci.org/cfhamlet/os-go-docid.svg?branch=master)](https://www.travis-ci.org/cfhamlet/os-go-docid)
 [![codecov](https://codecov.io/gh/cfhamlet/os-go-docid/branch/master/graph/badge.svg)](https://codecov.io/gh/cfhamlet/os-go-docid)
-[![Documentation](https://godoc.org/github.com/cfhamlet/os-go-docid/docid?status.svg)](https://godoc.org/github.com/cfhamlet/os-go-docid/docid)
+[![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/cfhamlet/os-go-docid?tab=overview)
 
 
 DocID for Golang. 
