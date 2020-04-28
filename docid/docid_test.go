@@ -63,6 +63,11 @@ var testsFromURLBytes = []parseTest{
 		false,
 	},
 	{
+		"http://abcint.cn/",
+		"b0236e4c461a7416-dd4b201bc72e5660-6d7f1e7cd2b2adf7b1874094404c014d",
+		false,
+	},
+	{
 		"1",
 		"",
 		true,
