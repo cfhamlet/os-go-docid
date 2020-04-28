@@ -250,8 +250,9 @@ func splitDomainSite(urlBytes Bytes) (Bytes, Bytes) {
 	if inSecondDomain(urlBytes[domainHead+1:domainPostHead]) && !inTopDomain(urlBytes[domainPostHead+1:domainTail]) {
 		domainHead = domainPreHead
 	}
-
-	domainHead++
+	for urlBytes[domainHead] == SymbolDot {
+		domainHead++
+	}
 
 	return urlBytes[domainHead:domainTail], urlBytes[siteHead:siteTail]
 }
